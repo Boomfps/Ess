@@ -6,8 +6,10 @@ import re
 import shutil
 import subprocess
 import tempfile
+import threading
 import time
 import urllib.request
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import discord
@@ -1138,4 +1140,39 @@ async def ess(interaction: discord.Interaction, student_id: str):
     )
 
 
-bot.run(DISCORD_TOKEN)
+class HealthHandler(BaseHTTPRequestHandler):
+    """จุดตรวจสุขภาพสำหรับ Render Free Web Service"""
+
+    def do_GET(self):
+        if self.path not in ("/", "/healthz"):
+            self.send_response(404)
+            self.end_headers()
+            return
+
+        response_body = b"ESS Discord bot is running"
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Content-Length", str(len(response_body)))
+        self.end_headers()
+        self.wfile.write(response_body)
+
+    def log_message(self, format, *args):
+        # ไม่เขียน log ทุกครั้งที่บริการตรวจสุขภาพถูกเรียก
+        return
+
+
+def start_health_server() -> None:
+    port = int(os.getenv("PORT", "10000"))
+    server = ThreadingHTTPServer(("0.0.0.0", port), HealthHandler)
+    thread = threading.Thread(
+        target=server.serve_forever,
+        name="render-health-server",
+        daemon=True,
+    )
+    thread.start()
+    logging.info("Health server พร้อมใช้งานที่พอร์ต %s", port)
+
+
+if __name__ == "__main__":
+    start_health_server()
+    bot.run(DISCORD_TOKEN)
