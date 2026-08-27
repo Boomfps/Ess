@@ -3,6 +3,7 @@ import io
 import logging
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 import time
@@ -707,6 +708,14 @@ class ESSStudentNotFoundError(Exception):
 
 def create_driver() -> webdriver.Chrome:
     options = Options()
+
+    chromium_binary = (
+        shutil.which("chromium")
+        or shutil.which("chromium-browser")
+        or shutil.which("google-chrome")
+    )
+    if chromium_binary:
+        options.binary_location = chromium_binary
 
     # ใช้ headless mode ที่รองรับ Chrome รุ่นใหม่
     options.add_argument("--headless=new")
