@@ -1,3 +1,4 @@
 discord.py==2.3.2
 selenium==4.15.2
 python-dotenv==1.0.0
+audioop-lts; python_version >= "3.13"
